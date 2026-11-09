@@ -1,0 +1,8 @@
+# 每次執行產生的中間檔
+liquidity.json
+analysis.json
+review.json
+run_meta.json
+data.json
+__pycache__/
+.DS_Store
