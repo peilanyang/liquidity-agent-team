@@ -17,6 +17,10 @@
 - 分析師與審核員必須是兩個不同的子 agent。
 - 新增指標時：先在 liquidity.py 加程式計算，再更新兩份角色說明，最後更新 dashboard.html。
 
+## 流動性表的四類（liquidity.py 每列的 category）
+依危機發生的順序：蓄水池（reservoir）→ 管線流量（flow）→ 壓力計（pressure）→ 滅火器（extinguisher）。
+新增流動性指標時要指定類別，並在 dashboard.html 的 GLOSSARY 與 TERM_OF 加上名詞解釋。
+
 ## 常用指令
 - 用真實資料跑：`python3 liquidity.py`、`python3 volatility.py`
 - 離線測試（不連網）：`python3 liquidity.py tests/sample`、`python3 volatility.py tests/sample`
@@ -26,9 +30,12 @@
 - FRED 公開 CSV：`https://fred.stlouisfed.org/graph/fredgraph.csv?id=<序列代號>`
 - FRED 會擋不認識的 User-Agent，程式固定用 `curl/8.5.0`
 - SRF 用 RPONTTLD（公債＋MBS＋機構債合計），不是 RPONTSYD
-- 準備金用 WRBWFRBL（週三水位，百萬美元，程式換算成兆）
+- 準備金用 WRBWFRBL、TGA 用 WDTGAL（都是週三水位，和使用者原本報表一致）
 - ON RRP 用 RRPONTSYD（十億美元，程式乘 10 換算成億美元，和報表單位一致）
 - 目前所有指標都自動抓取，沒有固定數字
+- 走廊：天花板 DFEDTARU（= SRF 利率）、地板 DFEDTARL（= ON RRP 利率）、IORB
+- 淨流動性 = WALCL − WDTGAL − 週三 ON RRP，各項先四捨五入到億再相減
+- 零售型貨幣基金 WRMFNS 每月才更新；ICI 網站會擋雲端連線，機構型資料要另找來源（OFR）
 - 波動率用 Yahoo Finance 每日資料（含最高、最低價），程式自行按週彙整：價格類比較每週波幅（最高−最低），OVX、GVZ 比較每週收盤；都和含本週在內的 13 週平均比較
 - Yahoo 的連線設定寫在 volatility.py，query1、query2 兩個主機輪流重試
 - 數字先四捨五入到顯示位數再算均值與倍數，看板上的數字才能直接驗算（審核員會驗）

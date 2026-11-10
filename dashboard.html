@@ -2,81 +2,113 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
-/* Layout: summary strip and reviewed brief on top, one ruled ledger table, team flow at the foot */
+/* Layout: stage strip (reservoir → flow → pressure → extinguisher) on top, reviewed brief, rate corridor, grouped ledger, volatility, glossary at the foot */
 :root{
   --bg:#f3f4f6; --panel:#ffffff; --fg:#14213d; --muted:#5b6478; --line:#dfe3ea;
   --accent:#e0a100; --accent-ink:#5a4100;
   --red:#c42b1c; --red-bg:#fbe9e7; --amber:#a35f00; --amber-bg:#fdf1dc; --green:#1f7a4d; --green-bg:#e4f4ea;
-  --bar:#b9c1d0;
+  --bar:#b9c1d0; --band:#e8ecf3;
   --display:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0f1420; --panel:#161d2c; --fg:#e7ebf3; --muted:#9aa4b8; --line:#2a3346;
   --accent:#f2b51d; --accent-ink:#1b1400;
-  --red:#ff7a6b; --red-bg:#3a1a19; --amber:#f0b45a; --amber-bg:#36290f; --green:#6fd3a0; --green-bg:#12301f; --bar:#3c475d; color-scheme:dark}}
+  --red:#ff7a6b; --red-bg:#3a1a19; --amber:#f0b45a; --amber-bg:#36290f; --green:#6fd3a0; --green-bg:#12301f;
+  --bar:#3c475d; --band:#1f283a; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0f1420; --panel:#161d2c; --fg:#e7ebf3; --muted:#9aa4b8; --line:#2a3346;
   --accent:#f2b51d; --accent-ink:#1b1400;
-  --red:#ff7a6b; --red-bg:#3a1a19; --amber:#f0b45a; --amber-bg:#36290f; --green:#6fd3a0; --green-bg:#12301f; --bar:#3c475d; color-scheme:dark}
+  --red:#ff7a6b; --red-bg:#3a1a19; --amber:#f0b45a; --amber-bg:#36290f; --green:#6fd3a0; --green-bg:#12301f;
+  --bar:#3c475d; --band:#1f283a; color-scheme:dark}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 body{background:var(--bg);color:var(--fg);font-family:var(--display);line-height:1.5;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 40px}
-.wrap{max-width:920px;margin:0 auto;display:grid;gap:20px}
+.wrap{max-width:940px;margin:0 auto;display:grid;gap:20px}
+.stack{display:grid;gap:12px;min-width:0}
+.stack>*{min-width:0}
 header{display:grid;gap:6px}
 .eyebrow{font-size:12px;letter-spacing:.12em;color:var(--muted);font-weight:500}
 h1{margin:0;font-size:clamp(24px,5vw,34px);font-weight:900;text-wrap:balance}
 .weeks{font-family:var(--mono);font-size:13px;color:var(--muted)}
-.summary{display:flex;flex-wrap:wrap;gap:8px}
-.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;font-size:13px;font-weight:500;background:var(--panel);border:1px solid var(--line)}
-.chip b{font-family:var(--mono)}
-.dot{width:8px;height:8px;border-radius:50%}
-.brief{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:grid;gap:8px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+/* stage strip */
+.stages{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:640px){.stages{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stage{background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--line);border-radius:8px;padding:10px 12px;display:grid;gap:2px;text-decoration:none;color:inherit}
+.stage.red{border-top-color:var(--red)} .stage.amber{border-top-color:var(--amber)}
+.stage small{font-size:11px;color:var(--muted);letter-spacing:.06em}
+.stage b{font-size:15px}
+.stage span{font-size:12px;color:var(--muted)}
+.stage.red span{color:var(--red)} .stage.amber span{color:var(--amber)}
+.stage:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* brief */
+.brief{display:grid;gap:8px}
 .brief-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between}
 .brief h2{margin:0;font-size:16px}
 .brief p{margin:0;font-size:14.5px;line-height:1.75;max-width:70ch}
 .review{font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--green-bg);color:var(--green)}
 .review.fail{background:var(--red-bg);color:var(--red)}
 .issues{margin:0;padding-left:18px;font-size:13px;color:var(--red)}
+.sec-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;justify-content:space-between}
+.sec-head h2{margin:0;font-size:18px;font-weight:900}
+.sec-head span{font-size:12.5px;color:var(--muted)}
+/* corridor */
+.corridor h3{margin:0 0 4px;font-size:14px}
+.corridor p{margin:0;font-size:12.5px;color:var(--muted);max-width:70ch}
+.cor-scroll{overflow-x:auto;margin-top:6px}
+.cor-svg{display:block;width:100%;min-width:520px;height:auto}
+.cor-svg text{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+.cor-svg .lbl{fill:var(--fg);font-family:var(--display);font-size:11.5px;font-weight:700}
+.cor-svg .band{fill:var(--band)}
+.cor-svg .edge{stroke:var(--fg);stroke-width:2}
+.cor-svg .tick{stroke:var(--muted);stroke-width:1}
+.cor-svg .m-ok{fill:var(--fg)} .cor-svg .m-warn{fill:var(--amber)} .cor-svg .m-bad{fill:var(--red)}
+.cor-svg .t-bad{fill:var(--red)} .cor-svg .t-warn{fill:var(--amber)}
+/* table */
 .table-wrap{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px}
-table{width:100%;border-collapse:collapse;min-width:600px;font-variant-numeric:tabular-nums}
+table{width:100%;border-collapse:collapse;min-width:620px;font-variant-numeric:tabular-nums}
 thead th{background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:13px;text-align:left;padding:10px 12px}
 thead th.num{text-align:right}
+tr.cat td{background:color-mix(in srgb,var(--line) 45%,transparent);padding:9px 12px;border-top:1px solid var(--line)}
+tr.cat b{font-size:13.5px;margin-right:8px}
+tr.cat span{font-size:12px;color:var(--muted)}
+tr.cat .step-no{display:inline-block;font-family:var(--mono);font-size:11px;color:var(--accent-ink);background:var(--accent);border-radius:4px;padding:0 5px;margin-right:6px}
 tbody tr.main{border-top:1px solid var(--line)}
 tbody tr.main.has-days{cursor:pointer}
 tbody tr.main.has-days:hover{background:color-mix(in srgb,var(--accent) 8%,transparent)}
 tbody tr.main:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 td{padding:11px 12px;vertical-align:top;font-size:14px}
-td.name{border-left:4px solid transparent;min-width:150px}
+td.name{border-left:4px solid transparent;min-width:160px}
 tr.lv-red td.name{border-left-color:var(--red)}
 tr.lv-amber td.name{border-left-color:var(--amber)}
 .nm{font-weight:700}
-.more{font-size:11px;color:var(--muted);margin-left:4px}
+.links{display:flex;gap:10px;margin-top:2px}
+.more{font-size:11px;color:var(--muted)}
+.glink{font-size:11px;color:var(--muted);text-decoration:underline;text-underline-offset:2px}
+.glink:hover{color:var(--fg)}
 td.num{text-align:right;font-family:var(--mono);white-space:nowrap}
 .delta{display:block;font-size:11.5px}
-.up{color:var(--red)} .down{color:var(--green)} .flat{color:var(--muted)}
+/* 升降只標方向、不標好壞：同樣是上升，準備金上升是好事、TGA 上升是壞事，好壞交給警示標籤 */
+.up,.down,.flat{color:var(--muted)}
 .tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:12.5px;font-weight:700}
 .t-red{background:var(--red-bg);color:var(--red)}
 .t-amber{background:var(--amber-bg);color:var(--amber)}
 .t-none{color:var(--muted);padding-left:0;font-weight:500}
 .rule{display:block;font-size:11.5px;color:var(--muted);margin-top:3px}
-.cmt{display:block;font-size:12.5px;margin-top:5px;line-height:1.5;min-width:190px}
+.cmt{display:block;font-size:12.5px;margin-top:5px;line-height:1.5;min-width:200px}
 tr.detail td{padding:0 12px 14px 16px;background:color-mix(in srgb,var(--line) 30%,transparent)}
 .days{display:flex;flex-wrap:wrap;gap:6px;padding-top:10px;align-items:center}
-.days .lbl{font-size:11.5px;color:var(--muted);width:30px}
+.days .lbl{font-size:11.5px;color:var(--muted);min-width:30px}
 .day{font-family:var(--mono);font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
 .day i{font-style:normal;color:var(--muted);margin-right:6px}
 .day.hi{border-color:var(--red);color:var(--red)}
-.flow{display:grid;gap:10px;font-size:13px;color:var(--muted)}
-.flow h2{font-size:14px;color:var(--fg);margin:0}
-.steps{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.step{padding:5px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
-.step b{display:block;font-size:12.5px}
-.step span{font-size:11.5px;color:var(--muted)}
-.arrow{color:var(--muted)}
-.state{padding:40px 0;text-align:center;color:var(--muted)}
-.sec-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;justify-content:space-between}
-.sec-head h2{margin:0;font-size:18px;font-weight:900}
-.sec-head span{font-size:12.5px;color:var(--muted)}
+.dates{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px}
+.dates b{font-size:13px}
+.date{font-family:var(--mono);font-size:12px;padding:3px 8px;border-radius:6px;background:var(--amber-bg);color:var(--amber)}
+.dates .none{color:var(--muted)}
+/* volatility */
 .spark{display:block;margin-top:6px}
 .spark .b{fill:var(--bar)}
 .spark .b.now{fill:var(--fg)}
@@ -85,6 +117,31 @@ tr.detail td{padding:0 12px 14px 16px;background:color-mix(in srgb,var(--line) 3
 .ratio.hi{color:var(--amber);font-weight:600}
 .legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted)}
 .legend i{display:inline-block;width:14px;height:8px;vertical-align:middle;margin-right:4px;border-radius:2px}
+/* glossary */
+.gloss-intro{display:grid;gap:8px}
+.gloss-intro h3{margin:0;font-size:15px}
+.gloss-intro p{margin:0;font-size:14px;line-height:1.75;max-width:70ch}
+.gloss-group{display:grid;gap:10px}
+.gloss-group>h3{margin:6px 0 0;font-size:15px}
+.gloss-group>p{margin:0;font-size:12.5px;color:var(--muted)}
+.terms{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:700px){.terms{grid-template-columns:minmax(0,1fr)}}
+.term{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:grid;gap:6px;scroll-margin-top:16px}
+.term:target{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 35%,transparent)}
+.term h4{margin:0;font-size:14.5px}
+.term h4 small{display:block;font-weight:500;font-size:11.5px;color:var(--muted);margin-top:1px}
+.term dl{margin:0;display:grid;gap:5px}
+.term dt{font-size:11px;letter-spacing:.06em;color:var(--muted);font-weight:700}
+.term dd{margin:0;font-size:13px;line-height:1.65}
+.term .back{font-size:11.5px;color:var(--muted)}
+.flow{display:grid;gap:10px;font-size:13px;color:var(--muted)}
+.flow h2{font-size:14px;color:var(--fg);margin:0}
+.steps{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.step{padding:5px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.step b{display:block;font-size:12.5px}
+.step span{font-size:11.5px;color:var(--muted)}
+.arrow{color:var(--muted)}
+.state{padding:40px 0;text-align:center;color:var(--muted)}
 </style>
 
 <div class="wrap">
@@ -93,91 +150,268 @@ tr.detail td{padding:0 12px 14px 16px;background:color-mix(in srgb,var(--line) 3
     <h1>全球金融風險看板</h1>
     <div class="weeks" id="weeks">載入本週資料中…</div>
   </header>
-  <div id="app" hidden>
-    <div class="wrap" style="max-width:none">
-      <div class="summary" id="summary"></div>
-      <section class="brief" aria-labelledby="brief-h">
-        <div class="brief-head"><h2 id="brief-h">本週總評</h2><span class="review" id="review"></span></div>
-        <p id="brief"></p>
-        <ul class="issues" id="issues" hidden></ul>
-      </section>
-      <div class="sec-head"><h2>美元流動性</h2><span>上週 vs 本週 · 依警示門檻標色 · 資料來源 FRED</span></div>
+
+  <div id="app" class="stack" style="gap:20px" hidden>
+    <nav class="stages" id="stages" aria-label="美元流動性四個階段"></nav>
+
+    <section class="panel brief" aria-labelledby="brief-h">
+      <div class="brief-head"><h2 id="brief-h">本週總評</h2><span class="review" id="review"></span></div>
+      <p id="brief"></p>
+      <ul class="issues" id="issues" hidden></ul>
+    </section>
+
+    <section class="stack" aria-labelledby="liq-h">
+      <div class="sec-head"><h2 id="liq-h">美元流動性</h2><span>依危機發生的順序排列 · 點指標看每日明細 · 資料來源 FRED</span></div>
+      <div class="panel corridor">
+        <h3>本週利率走廊</h3>
+        <p>聯準會用地板（ON RRP 利率）和天花板（SRF 利率）把短期利率圍在中間。點越靠右越接近天花板，超過天花板代表在市場借錢比找聯準會還貴。</p>
+        <div class="cor-scroll"><svg class="cor-svg" id="corridor" viewBox="0 0 640 132" role="img" aria-label="利率走廊"></svg></div>
+      </div>
       <div class="table-wrap">
         <table>
           <thead><tr><th>指標</th><th class="num">上週</th><th class="num">本週</th><th>警示與判讀</th></tr></thead>
           <tbody id="rows"></tbody>
         </table>
       </div>
-      <section id="vol" class="wrap" style="max-width:none;gap:12px" hidden>
-        <div class="sec-head"><h2>波動率</h2><span id="vol-sub"></span></div>
-        <div class="legend"><span><i style="background:var(--bar)"></i>過去 13 週</span><span><i style="background:var(--fg)"></i>本週</span><span><i style="background:var(--accent);height:2px"></i>13 週均值</span></div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>指標</th><th class="num">上週</th><th class="num">本週</th><th class="num">13 週均值</th><th>13 週走勢與判讀</th></tr></thead>
-            <tbody id="vrows"></tbody>
-          </table>
-        </div>
-      </section>
-      <section class="flow">
-        <h2>本週產出流程</h2>
-        <div class="steps">
-          <div class="step"><b>資料員</b><span>程式下載 FRED 原始資料並計算</span></div><span class="arrow">→</span>
-          <div class="step"><b>分析師</b><span>依數字寫判讀</span></div><span class="arrow">→</span>
-          <div class="step"><b>審核員</b><span>逐句驗算核對</span></div><span class="arrow">→</span>
-          <div class="step"><b>主管</b><span>審核通過後發布</span></div>
-        </div>
-        <div id="gen"></div>
-      </section>
-    </div>
+      <div class="panel dates" id="dates"></div>
+    </section>
+
+    <section id="vol" class="stack" hidden aria-labelledby="vol-h">
+      <div class="sec-head"><h2 id="vol-h">波動率</h2><span id="vol-sub"></span></div>
+      <div class="legend"><span><i style="background:var(--bar)"></i>過去 13 週</span><span><i style="background:var(--fg)"></i>本週</span><span><i style="background:var(--accent);height:2px"></i>13 週均值</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>指標</th><th class="num">上週</th><th class="num">本週</th><th class="num">13 週均值</th><th>13 週走勢與判讀</th></tr></thead>
+          <tbody id="vrows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="stack" id="glossary" aria-labelledby="gloss-h">
+      <div class="sec-head"><h2 id="gloss-h">名詞解釋</h2><span>表格中點「說明」可跳到這裡</span></div>
+      <div class="panel gloss-intro">
+        <h3>整張流動性表在看什麼</h3>
+        <p>美元短期資金市場的核心，是「用公債換現金一個晚上」。手上有公債缺現金的（交易商、對沖基金），和手上有現金想找安全去處的（貨幣基金、聯邦住宅貸款銀行），每天晚上在回購市場交換，而且隔天要再借一次。</p>
+        <p>聯準會替這個市場設了地板和天花板：出錢的一方借不出去，可以把錢放到聯準會的 ON RRP（地板）；借錢的一方借不到，可以向聯準會的 SRF 借（天花板）。短期利率平常就在兩者之間浮動。</p>
+        <p>所以整張表在回答同一個問題：<b>現金和公債之間的交換還順不順？</b>依危機發生的順序來看：蓄水池水位下降，管線流量改變，壓力計升高，最後動用滅火器。只有蓄水池偏低、壓力計平穩，代表還有空間；壓力計跳升、滅火器也有使用量，才是真正緊張。</p>
+      </div>
+      <div id="terms" class="stack" style="gap:18px"></div>
+    </section>
+
+    <section class="flow">
+      <h2>本週產出流程</h2>
+      <div class="steps">
+        <div class="step"><b>資料員</b><span>程式下載 FRED、Yahoo 原始資料並計算</span></div><span class="arrow">→</span>
+        <div class="step"><b>分析師</b><span>依數字寫判讀</span></div><span class="arrow">→</span>
+        <div class="step"><b>審核員</b><span>逐句驗算核對</span></div><span class="arrow">→</span>
+        <div class="step"><b>主管</b><span>審核通過後發布</span></div>
+      </div>
+      <div id="gen"></div>
+    </section>
   </div>
   <div class="state" id="state">正在讀取 data.json…</div>
 </div>
 
 <script>
-const RED=["心絞痛","稀缺區"];
+/* ---------- 名詞解釋（依四類分組；id 對應表格中的「說明」連結） ---------- */
+const GLOSSARY = {
+  reservoir: [
+    {id:"res", t:"準備金", en:"Reserve Balances",
+     what:"銀行存在聯準會帳戶裡的錢，是整個銀行體系最終的流動性，也就是蓄水池的水位。看板用週三水位。",
+     read:"太少時銀行會互相搶資金，短期利率容易突然跳升，2019 年 9 月的回購利率飆升就是例子。看板門檻：低於 3 兆為適度區、低於 2.3 兆為稀缺區，大約對應準備金佔 GDP 的 13% 與 10%。"},
+    {id:"rrp", t:"ON RRP", en:"隔夜逆回購 Overnight Reverse Repo",
+     what:"貨幣市場基金等機構把多餘的錢借給聯準會一晚、換取公債擔保的工具，可以想成市場閒錢的停車場，也是利率走廊的地板。看板單位為億美元。",
+     read:"2022 年底最高曾超過 2 兆美元，現在只剩幾億到幾十億，代表多餘的資金已經被吸乾。備用水箱空了之後，TGA 每抽走一塊錢，幾乎就直接從準備金扣掉一塊錢。"},
+    {id:"tga", t:"TGA", en:"財政部一般帳戶 Treasury General Account",
+     what:"美國財政部存在聯準會的支票帳戶。財政部收稅、發債時 TGA 增加，錢從銀行體系被抽走、準備金下降；財政部花錢時 TGA 減少，錢流回市場。看板用週三水位。",
+     normal:"約 7,500 億～1 兆美元，以財政部每季公布的目標為準（2026 年底目標 8,500 億、2027 年 3 月底 1 兆）。2024 年以來週三水位的中位數約 7,960 億，九成時間在 4,500 億到 9,400 億之間。",
+     warn:"偏低（低於 5,000 億）：通常發生在債務上限期間，財政部只能花存款，短期等於放水；但上限解除後會大量發債補回，反而一口氣把錢抽走。例如 2025 年 7 月初只剩約 3,600 億，之後 4 個月補到 9,400 億。增加太快（單週超過 1,000 億）：抽水力道大，要注意準備金會不會跟著掉。1、4、6、9、12 月 15 日前後的報稅週，單週增加 1,500 億到 3,000 億屬季節性正常現象。",
+     read:"變化的速度比水位本身更重要。"},
+    {id:"netliq", t:"淨流動性", en:"Net Liquidity",
+     what:"聯準會總資產 − TGA − ON RRP，把進水口、抽水機和備用水箱合在一起，估算實際留在市場上的總水量。市場分析常用的簡化公式。",
+     read:"看方向比看水位重要：持續上升代表整體資金在變多，持續下降代表在變少。"},
+    {id:"qt", t:"聯準會總資產與 QT 速度", en:"Fed Balance Sheet · Quantitative Tightening",
+     what:"聯準會買債（擴表）就是往蓄水池注水，縮表（QT）就是放水出去，是水量的總源頭。看板列出總資產、近 4 週變化（每月縮表速度），以及持有公債與 MBS 的變化。",
+     read:"總資產近 4 週變化為負就是在縮表，數字越負縮得越快。2026 年以來總資產大致持平：MBS 到期後沒有收回，而是轉買短期國庫券，所以總規模不變、組成從 MBS 換成短債。"},
+    {id:"fimarrp", t:"FIMA 逆回購池", en:"Foreign Official Reverse Repo",
+     what:"外國央行和國際機構存在聯準會、換取公債擔保的美元，類似外國央行專用的 ON RRP。",
+     read:"這筆錢停在聯準會、沒有在市場上流動。如果外國央行需要美元（例如要干預匯市），會先動用這裡的錢，金額下降代表海外在動用美元存款。"},
+    {id:"mmf", t:"貨幣市場基金", en:"Money Market Funds",
+     what:"回購市場最大的現金供給者，也是 ON RRP 的主要使用者。看板目前只有 FRED 每週公布的零售型基金，約佔總規模四成。",
+     read:"規模持續增加，代表可以借進回購市場的現金變多；如果貨幣基金把錢從回購轉去買國庫券，回購市場的現金就會變少。"},
+  ],
+  flow: [
+    {id:"sofrvol", t:"SOFR 交易量", en:"SOFR Volume",
+     what:"每天以公債擔保的隔夜回購成交金額，SOFR 就是從這些交易算出來的，目前每天約 3 兆美元以上。",
+     read:"量增加代表用回購融資的部位變大（例如對沖基金的公債基差交易），市場對每天滾隔夜的依賴也越高。"},
+    {id:"ffvol", t:"聯邦基金交易量", en:"Federal Funds Volume",
+     what:"銀行之間不用擔保、借錢一晚的每日成交金額。目前主要是套利交易：聯邦住宅貸款銀行（FHLB）的錢存在聯準會拿不到利息，所以借給外國銀行；外國銀行再存進聯準會，賺一點利差。EFFR 就是從這些交易算出來的。",
+     read:"量平穩代表仍是套利在主導，銀行沒有真的缺錢。如果準備金變少、美國本土銀行開始進場借錢，交易量和 EFFR 會一起上升，那才是警訊。"},
+  ],
+  pressure: [
+    {id:"sofr", t:"SOFR", en:"擔保隔夜融資利率 Secured Overnight Financing Rate",
+     what:"拿美國公債當擔保、借錢一個晚上的利率，紐約聯儲每天根據回購交易算出，是美元短期資金最主要的基準利率。借錢的主要是交易商和對沖基金，出錢的主要是貨幣基金；和聯準會之間的交易不算在內。",
+     read:"SOFR 越接近天花板（SRF 利率），代表回購市場現金越緊。"},
+    {id:"effr", t:"EFFR", en:"有效聯邦基金利率 Effective Federal Funds Rate",
+     what:"銀行之間不用擔保、借錢一個晚上的利率，也就是聯準會政策利率實際的落點。",
+     read:"通常非常穩定，主要作為和 SOFR、IORB 比較的基準。"},
+    {id:"iorb", t:"EFFR − IORB", en:"IORB：準備金利率 Interest on Reserve Balances",
+     what:"IORB 是聯準會付給銀行準備金的利率。EFFR − IORB 是聯準會自己用來判斷準備金夠不夠的指標。",
+     read:"EFFR 低於 IORB 越多，代表準備金越充足；差距縮小到接近 0，代表銀行開始願意付更高的利率借準備金，準備金不再充裕。看板在 −5bp 以上標示「接近 IORB」，0 以上標示「準備金不足訊號」。"},
+    {id:"spread", t:"SOFR − EFFR 利差", en:"表格中的「心絞痛」指標",
+     what:"SOFR 減 EFFR，以基點（bp，0.01%）計。",
+     read:"正常情況下有擔保借款應該比較便宜，利差擴大代表回購市場比銀行間市場更缺錢。看板警示門檻 ≥ 7bp。"},
+    {id:"sofr99", t:"SOFR 99 百分位", en:"SOFR 99th Percentile",
+     what:"當天所有 SOFR 交易中，利率最高的那 1% 的門檻。",
+     read:"SOFR 是中位數，看不出局部緊張；99 百分位反映最急著借錢的機構付出的價格，通常是信用較弱的交易商或槓桿較高的對沖基金。它比 SOFR 本身更早反映有人借錢開始困難。"},
+    {id:"corridor", t:"距天花板", en:"利率走廊 Rate Corridor",
+     what:"天花板是 SRF 利率（政策區間上限），地板是 ON RRP 利率（政策區間下限）。「距天花板」是 SOFR 或 SOFR 99 百分位減掉天花板，以基點計。",
+     read:"負數代表還在天花板以下；接近 0 代表快撞到天花板；0 以上代表有人在市場上付的利率比直接找聯準會借還貴，這時 SRF 通常就會出現成交。"},
+    {id:"cp", t:"商業本票 − 國庫券利差", en:"3 個月 AA 級金融商業本票 − 3 個月國庫券",
+     what:"企業（這裡是信用評等 AA 的金融機構）借 3 個月短期資金，比美國政府貴多少。美元 LIBOR 在 2023 年停用後，市場常用它替代 FRA−OIS 觀察短期信用壓力。",
+     read:"平常在 10～30bp。2008 年金融海嘯、2020 年 3 月疫情衝擊時都曾大幅擴大。看板在 30bp 以上標示偏高、60bp 以上標示明顯緊張。"},
+  ],
+  extinguisher: [
+    {id:"srf", t:"SRF", en:"常設回購便利 Standing Repo Facility",
+     what:"聯準會在 2021 年設立的常設借款窗口，一級交易商和報名的銀行可以用公債、機構債、機構 MBS 當擔保，向聯準會借隔夜資金，利率就是天花板。",
+     read:"洩壓閥：平常幾乎沒人用，只要有成交，就代表回購市場上借錢的利率已經貴到不如找聯準會，常見於月底、季底或 TGA 大量抽水時。"},
+    {id:"dw", t:"貼現窗口", en:"Discount Window · 一級信貸 Primary Credit",
+     what:"聯準會直接借錢給存款機構（商業銀行等）的管道，擔保品範圍很廣，連銀行的放款都能押，期限最長 90 天。看板追蹤一級信貸的週三水位。",
+     read:"急診室：向來有「去借就代表有問題」的形象，借款增加通常反映個別銀行的資金壓力。2023 年 3 月矽谷銀行倒閉時，一週內暴增到 1,500 億美元以上。"},
+    {id:"fimarepo", t:"FIMA 回購", en:"FIMA Repo Facility",
+     what:"讓外國央行拿手上的美國公債，向聯準會換美元的工具，2021 年設立。",
+     read:"外國央行缺美元時不必在市場上拋售美債，避免美債市場被砸。平常是 0，有使用量就代表海外有央行缺美元。"},
+    {id:"swap", t:"央行換匯額度", en:"Central Bank Liquidity Swaps",
+     what:"聯準會和歐洲、日本、英國、加拿大、瑞士等主要央行之間的美元換匯，讓這些央行可以把美元再借給自己國內的銀行。",
+     read:"平常只有數億美元的例行操作。2008 年金融海嘯、2020 年 3 月都曾大量動用，金額明顯增加代表海外美元短缺。"},
+  ],
+};
+/* 表格指標名稱 → 名詞解釋 id */
+const TERM_OF = [
+  ["準備金","res"],["ON RRP","rrp"],["TGA","tga"],["淨流動性","netliq"],["聯準會總資產","qt"],["每月縮表","qt"],
+  ["持有公債","qt"],["持有 MBS","qt"],["FIMA 逆回購","fimarrp"],["零售型貨幣基金","mmf"],
+  ["SOFR 交易量","sofrvol"],["聯邦基金交易量","ffvol"],["EFFR −","iorb"],["EFFR 最高","effr"],
+  ["SOFR − EFFR","spread"],["SOFR 距","corridor"],["SOFR99 距","corridor"],["SOFR99 最高","sofr99"],
+  ["商業本票","cp"],["SRF","srf"],["貼現窗口","dw"],["FIMA 回購","fimarepo"],["央行換匯","swap"],
+];
+const termOf = n => (TERM_OF.find(([k]) => n.startsWith(k)) || [])[1];
+
 const dec=v=>{const s=String(v);return s.includes(".")?Math.min(s.split(".")[1].length,5):0};
 const fmt=(v,d)=>v==null?"—":Number(v).toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const $=id=>document.getElementById(id);
+
+function renderGlossary(cats){
+  $("terms").innerHTML = cats.map((c,i)=>`
+    <div class="gloss-group">
+      <h3>${i+1}. ${esc(c.name)}</h3><p>${esc(c.desc)}</p>
+      <div class="terms">${(GLOSSARY[c.id]||[]).map(g=>`
+        <article class="term" id="g-${g.id}">
+          <h4>${esc(g.t)}<small>${esc(g.en)}</small></h4>
+          <dl>
+            <dt>是什麼</dt><dd>${esc(g.what)}</dd>
+            ${g.normal?`<dt>正常範圍</dt><dd>${esc(g.normal)}</dd>`:""}
+            ${g.warn?`<dt>異常訊號</dt><dd>${esc(g.warn)}</dd>`:""}
+            <dt>怎麼看</dt><dd>${esc(g.read)}</dd>
+          </dl>
+          <a class="back" href="#liq-h">回到表格 ↑</a>
+        </article>`).join("")}</div>
+    </div>`).join("");
+}
+
+function renderCorridor(D){
+  const C=D.corridor; if(!C) return;
+  const get=n=>D.rows.find(r=>r.name.startsWith(n));
+  const sofrTop=get("SOFR 距"), s99Top=get("SOFR99 距"), effr=get("EFFR 最高");
+  const pts=[
+    {v:C.floor,l:"地板 ON RRP",edge:1},{v:C.iorb,l:"IORB",tick:1},{v:C.ceiling,l:"天花板 SRF",edge:1},
+    effr&&{v:effr.this,l:"EFFR 最高",up:1},
+    sofrTop&&{v:C.ceiling+sofrTop.this/100,l:"SOFR 最高",up:0,cls:sofrTop.this>=0?"bad":sofrTop.this>=-5?"warn":"ok"},
+    s99Top&&{v:C.ceiling+s99Top.this/100,l:"SOFR99 最高",up:1,cls:s99Top.this>=0?"bad":s99Top.this>=-5?"warn":"ok"},
+  ].filter(Boolean);
+  const lo=C.floor-0.05, hi=Math.max(C.ceiling+0.1,...pts.map(p=>p.v+0.03));
+  const X0=24,X1=616,x=v=>X0+(v-lo)/(hi-lo)*(X1-X0), Y=66;
+  let s=`<rect class="band" x="${x(C.floor)}" y="${Y-14}" width="${x(C.ceiling)-x(C.floor)}" height="28" rx="3"></rect>`;
+  s+=`<line class="tick" x1="${X0}" x2="${X1}" y1="${Y}" y2="${Y}"></line>`;
+  pts.forEach(p=>{
+    const px=x(p.v).toFixed(1);
+    if(p.edge){s+=`<line class="edge" x1="${px}" x2="${px}" y1="${Y-20}" y2="${Y+20}"></line>
+      <text x="${px}" y="${Y+36}" text-anchor="middle">${p.v.toFixed(2)}%</text><text class="lbl" x="${px}" y="${Y+50}" text-anchor="middle">${p.l}</text>`;}
+    else if(p.tick){s+=`<line class="tick" x1="${px}" x2="${px}" y1="${Y-14}" y2="${Y+14}" stroke-dasharray="3 2"></line>
+      <text x="${px}" y="${Y+36}" text-anchor="middle">${p.v.toFixed(2)}%</text><text class="lbl" x="${px}" y="${Y+50}" text-anchor="middle">${p.l}</text>`;}
+    else{const cls=p.cls||"ok", ty=p.up?Y-36:Y-22, tv=p.up?Y-24:Y-10;
+      s+=`<circle class="m-${cls}" cx="${px}" cy="${Y}" r="5.5"></circle>
+      <line class="tick" x1="${px}" x2="${px}" y1="${Y-6}" y2="${tv+3}"></line>
+      <text class="lbl ${cls!=="ok"?"t-"+cls:""}" x="${px}" y="${ty}" text-anchor="middle">${p.l}</text>
+      <text class="${cls!=="ok"?"t-"+cls:""}" x="${px}" y="${tv}" text-anchor="middle">${p.v.toFixed(2)}%</text>`;}
+  });
+  $("corridor").innerHTML=s;
+}
 
 function render(D){
-  document.getElementById("weeks").textContent=`上週 ${D.last_week}　｜　本週 ${D.this_week}　｜　最新資料日 ${D.latest_data}`;
-  document.getElementById("brief").textContent=D.summary;
-  const rv=document.getElementById("review"),R=D.review,ok=R.verdict==="通過";
+  $("weeks").textContent=`上週 ${D.last_week}　｜　本週 ${D.this_week}　｜　最新資料日 ${D.latest_data}`;
+  $("brief").textContent=D.summary;
+  const rv=$("review"),R=D.review,ok=R.verdict==="通過";
   rv.textContent=ok?`審核通過（第 ${R.rounds} 輪）`:`審核未通過（${R.rounds} 輪）`;
-  if(!ok){rv.classList.add("fail");const ul=document.getElementById("issues");ul.hidden=false;
+  if(!ok){rv.classList.add("fail");const ul=$("issues");ul.hidden=false;
     ul.innerHTML=R.issues.map(i=>`<li>${esc(i.name)}：${esc(i.problem)}</li>`).join("");}
-  document.getElementById("gen").textContent=`產生時間：${D.generated_at}。第一輪審核挑出 ${R.first_round_issues} 個問題。`;
-  const counts={red:0,amber:0}, tb=document.getElementById("rows");
-  D.rows.forEach(r=>{
-    const d=Math.max(dec(r.last),dec(r.this));
-    const lv=r.alert?(RED.includes(r.alert)?"red":"amber"):"none"; if(lv!=="none")counts[lv]++;
-    const cls=r.trend.includes("上升")?"up":r.trend.includes("下降")?"down":"flat";
-    const diff=(r.last!=null&&r.this!=null&&cls!=="flat")?(r.this>r.last?"▲ ":"▼ ")+fmt(Math.abs(r.this-r.last),d):"—";
-    const days=D.daily?.[r.name];
-    const tr=document.createElement("tr"); tr.className="main lv-"+lv+(days?" has-days":"");
-    tr.innerHTML=`<td class="name"><span class="nm">${esc(r.name)}</span>${days?'<span class="more">每日 ▾</span>':''}</td>
-      <td class="num">${fmt(r.last,d)}</td>
-      <td class="num">${fmt(r.this,d)}<span class="delta ${cls}">${diff}</span></td>
-      <td><span class="tag t-${lv}">${esc(r.alert||r.trend)}</span>${r.note?`<span class="rule">${esc(r.note)}</span>`:''}<span class="cmt">${esc(r.comment)}</span></td>`;
-    tb.appendChild(tr);
-    if(days){
-      tr.tabIndex=0;
-      const det=document.createElement("tr");det.className="detail";det.hidden=true;
-      const blk=(lbl,o)=>{const vs=Object.values(o);if(!vs.length)return"";const m=Math.max(...vs);
-        return `<div class="days"><span class="lbl">${lbl}</span>${Object.entries(o).map(([k,v])=>`<span class="day${v===m&&vs.length>2&&m>0?' hi':''}"><i>${k}</i>${fmt(v,d)}</span>`).join("")}</div>`;};
-      det.innerHTML=`<td colspan="4">${blk("上週",days.last)}${blk("本週",days.this)}</td>`;
-      tb.appendChild(det);
-      const t=()=>{det.hidden=!det.hidden};
-      tr.addEventListener("click",t);
-      tr.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();t();}});
-    }
+  $("gen").textContent=`產生時間：${D.generated_at}。第一輪審核挑出 ${R.first_round_issues} 個問題。`;
+
+  const cats=D.categories||[{id:"all",name:"美元流動性",desc:""}];
+  const rowsOf=c=>D.rows.filter(r=>(r.category||"all")===c.id);
+  const lvOf=r=>r.alert?(r.level||"amber"):"none";
+
+  /* stage strip */
+  $("stages").innerHTML=cats.map((c,i)=>{
+    const rs=rowsOf(c), red=rs.filter(r=>lvOf(r)==="red").length, am=rs.filter(r=>lvOf(r)==="amber").length;
+    const cls=red?"red":am?"amber":"";
+    const txt=red?`${red} 項紅色警示${am?`、${am} 項需留意`:""}`:am?`${am} 項需留意`:"無警示";
+    return `<a class="stage ${cls}" href="#cat-${c.id}"><small>第 ${i+1} 階段</small><b>${esc(c.name)}</b><span>${txt}</span></a>`;
+  }).join("");
+
+  const tb=$("rows");
+  cats.forEach((c,i)=>{
+    const head=document.createElement("tr"); head.className="cat"; head.id="cat-"+c.id;
+    head.innerHTML=`<td colspan="4"><span class="step-no">${i+1}</span><b>${esc(c.name)}</b><span>${esc(c.desc)}</span></td>`;
+    tb.appendChild(head);
+    rowsOf(c).forEach(r=>{
+      const d=Math.max(dec(r.last),dec(r.this));
+      const lv=lvOf(r);
+      const t=r.trend||"";
+      const cls=/上升|擴表|增加/.test(t)?"up":/下降|縮表|減少/.test(t)?"down":"flat";
+      const diff=(r.last!=null&&r.this!=null&&r.this!==r.last)?(r.this>r.last?"▲ ":"▼ ")+fmt(Math.abs(r.this-r.last),d):"—";
+      const days=D.daily?.[r.name], g=termOf(r.name);
+      const tr=document.createElement("tr"); tr.className="main lv-"+lv+(days?" has-days":"");
+      tr.innerHTML=`<td class="name"><span class="nm">${esc(r.name)}</span><span class="links">${days?'<span class="more">明細 ▾</span>':''}${g?`<a class="glink" href="#g-${g}">說明</a>`:''}</span></td>
+        <td class="num">${fmt(r.last,d)}</td>
+        <td class="num">${fmt(r.this,d)}<span class="delta ${cls}">${diff}</span></td>
+        <td><span class="tag t-${lv}">${esc(r.alert||t)}</span>${r.note?`<span class="rule">${esc(r.note)}</span>`:''}${r.comment?`<span class="cmt">${esc(r.comment)}</span>`:''}</td>`;
+      tb.appendChild(tr);
+      tr.querySelector(".glink")?.addEventListener("click",e=>e.stopPropagation());
+      if(days){
+        tr.tabIndex=0;
+        const det=document.createElement("tr");det.className="detail";det.hidden=true;
+        const blk=(lbl,o)=>{if(!o)return"";const vs=Object.values(o);if(!vs.length)return"";const m=Math.max(...vs);
+          return `<div class="days"><span class="lbl">${lbl}</span>${Object.entries(o).map(([k,v])=>`<span class="day${v===m&&vs.length>2&&m>0?' hi':''}"><i>${k}</i>${fmt(v,Math.max(d,dec(v)))}</span>`).join("")}</div>`;};
+        det.innerHTML=`<td colspan="4">${days.weeks?blk("近 8 週",days.weeks):blk("上週",days.last)+blk("本週",days.this)}</td>`;
+        tb.appendChild(det);
+        const tg=()=>{det.hidden=!det.hidden};
+        tr.addEventListener("click",tg);
+        tr.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();tg();}});
+      }
+    });
   });
-  const S=document.getElementById("summary");
-  [["red","紅色警示",counts.red],["amber","需留意",counts.amber],["green","無警示",D.rows.length-counts.red-counts.amber]]
-    .forEach(([k,t,n])=>S.insertAdjacentHTML("beforeend",`<span class="chip"><span class="dot" style="background:var(--${k})"></span>${t} <b>${n}</b></span>`));
+
+  const K=D.key_dates||[];
+  $("dates").innerHTML=`<b>接下來兩週的關鍵日期</b>${K.length?K.map(k=>`<span class="date">${k.date.slice(5)} ${esc(k.label)}</span>`).join(""):'<span class="none">沒有月底、季底、報稅或國債結算日</span>'}<span class="none">利率常在這些日子短暫跳升</span>`;
+
+  renderCorridor(D);
+  renderGlossary(cats.filter(c=>GLOSSARY[c.id]));
   if(D.volatility) renderVol(D.volatility);
-  document.getElementById("state").hidden=true; document.getElementById("app").hidden=false;
+  $("state").hidden=true; $("app").hidden=false;
+  if(location.hash){const el=document.querySelector(location.hash);el&&el.scrollIntoView();}
 }
+
 function spark(weeks,avg){
   const vs=Object.values(weeks), n=vs.length, W=168, H=34, pad=2;
   const top=Math.max(...vs,avg)*1.08||1, bw=(W-pad*2)/n;
@@ -186,9 +420,9 @@ function spark(weeks,avg){
   return `<svg class="spark" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="13 週走勢">${bars}<line class="avg" x1="0" x2="${W}" y1="${y(avg).toFixed(1)}" y2="${y(avg).toFixed(1)}"></line></svg>`;
 }
 function renderVol(V){
-  const sec=document.getElementById("vol"), tb=document.getElementById("vrows");
+  const tb=$("vrows");
   const above=V.rows.filter(r=>r.alert).length;
-  document.getElementById("vol-sub").textContent=`和自己過去 ${V.avg_weeks} 週平均比較 · ${above} / ${V.rows.length} 項高於均值 · ${V.source}`;
+  $("vol-sub").textContent=`和自己過去 ${V.avg_weeks} 週平均比較 · ${above} / ${V.rows.length} 項高於均值 · ${V.source}`;
   V.rows.forEach(r=>{
     const d=Math.max(dec(r.last),dec(r.this),dec(r.avg13));
     const cls=r.trend.includes("上升")?"up":r.trend.includes("下降")?"down":"flat";
@@ -200,9 +434,9 @@ function renderVol(V){
       <td><span class="tag t-${r.alert?'amber':'none'}">${r.alert?esc(r.alert):'小於13週均值'}</span>${spark(r.weeks,r.avg13)}<span class="cmt">${esc(r.comment)}</span></td>`;
     tb.appendChild(tr);
   });
-  sec.hidden=false;
+  $("vol").hidden=false;
 }
+
 fetch("data.json",{cache:"no-store"}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(render)
-  .catch(()=>{document.getElementById("state").textContent="讀不到本週資料（data.json）。請重新整理，或請 Claude 重新發布。";
-    document.getElementById("weeks").textContent="";});
+  .catch(()=>{$("state").textContent="讀不到本週資料（data.json）。請重新整理，或請 Claude 重新發布。";$("weeks").textContent="";});
 </script>
