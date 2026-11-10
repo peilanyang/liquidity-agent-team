@@ -37,7 +37,7 @@
 
 ### 第 5 步：發布與存檔
 1. 執行 `python3 build_data.py` 產生 `data.json`。
-2. 存檔到 Drive「週報紀錄」：create_file，標題 `<本週週一日期>_流動性週報.json`，contentMimeType 為 application/json，disableConversionToGoogleType 為 true。同名檔案已存在時，標題後加 `_v2`。
+2. 存檔到 Drive「週報紀錄」：create_file，標題 `<data.json 的 this_week 日期>_流動性週報.json`（資料所屬週的週一，不是執行日），contentMimeType 為 application/json，disableConversionToGoogleType 為 true。同名檔案已存在時，標題後加 `_v2`。
 3. 更新看板：先用 Artifact read 取回 `index.html` 存到本地，再以它為 file_path、url 為看板網址發布，files 只放 `{"data.json": "<本地 data.json 路徑>"}`。
 
 ### 第 6 步：回報
