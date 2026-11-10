@@ -26,7 +26,9 @@
 - FRED 公開 CSV：`https://fred.stlouisfed.org/graph/fredgraph.csv?id=<序列代號>`
 - FRED 會擋不認識的 User-Agent，程式固定用 `curl/8.5.0`
 - SRF 用 RPONTTLD（公債＋MBS＋機構債合計），不是 RPONTSYD
-- 準備金、ON RRP 目前是 liquidity.py 設定區的固定數字
+- 準備金用 WRBWFRBL（週三水位，百萬美元，程式換算成兆）
+- ON RRP 用 RRPONTSYD（十億美元，程式乘 10 換算成億美元，和報表單位一致）
+- 目前所有指標都自動抓取，沒有固定數字
 
 ## 外部位置
 - 看板：https://claude.ai/artifact/NXicQXTd3rBct5kBBY46pA （頁面讀取同目錄的 data.json）

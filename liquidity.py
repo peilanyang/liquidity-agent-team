@@ -21,20 +21,16 @@ from datetime import date
 
 # ========== 1. 設定區：要改數字或門檻，只改這裡 ==========
 
-# 暫時用固定數字的指標（之後改成自動抓取）
-FIXED = {
-    "reserves": {"last": 2.90, "this": 2.96},                 # 準備金，兆美元
-    "rrp": {"last": {"avg": 11, "min": 2}, "this": {"avg": 12, "min": 1}},  # ON RRP，十億美元
-}
-
 # 警示門檻
 THRESHOLDS = {
     "spread_bp": 7,          # SOFR-EFFR ≥ 7bp → 心絞痛
     "reserves_ample": 3.0,   # 準備金 < 3 兆 → 適度區
     "reserves_scarce": 2.3,  # 準備金 < 2.3 兆 → 稀缺區
-    "rrp_scarce": 375,       # ON RRP < 3,750 億 → 稀缺區（十億美元）
+    "rrp_scarce": 3750,      # ON RRP < 3,750 億 → 稀缺區（億美元）
     "tga_scarce": 500_000,   # TGA < 5,000 億 → 稀缺區（百萬美元）
 }
+
+# 所有指標都由程式從 FRED 自動抓取，沒有固定數字
 
 # 要從 FRED 下載的序列
 SERIES = {
@@ -46,6 +42,8 @@ SERIES = {
     "WLCFLPCL": "貼現窗口一級信貸 (百萬美元，週三)",
     "WTREGEN": "TGA 財政部帳戶 (百萬美元，週均)",
     "RPONTTLD": "常設回購 SRF 合計：公債+MBS+機構債 (十億美元)",
+    "WRBWFRBL": "準備金餘額 (百萬美元，週三水位)",
+    "RRPONTSYD": "ON RRP 隔夜逆回購 (十億美元)",
 }
 
 FRED_CSV = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={}&cosd={}"
@@ -123,8 +121,10 @@ def trend(a, b, tol=0.02):
 def build(csv_dir=None):
     raw = {sid: fetch(sid, csv_dir=csv_dir) for sid in SERIES}
 
-    # 以 SOFR 最新一筆所在的週為「本週」
+    # 以 SOFR 最新一筆所在的週為「本週」；若那一週還沒結束，就改用上一週
     this_wk = week_key(max(raw["SOFR"]))
+    if not csv_dir and this_wk == week_key(date.today()):
+        this_wk = prev_week(this_wk)
     last_wk = prev_week(this_wk)
     W = {sid: split_weeks(d, this_wk, last_wk) for sid, d in raw.items()}
 
@@ -144,6 +144,13 @@ def build(csv_dir=None):
         return raw[sid][ds[-2]], raw[sid][ds[-1]], ds[-2], ds[-1]
 
     dw_l, dw_t, *_ = last_two("WLCFLPCL")
+    res_l, res_t, *_ = last_two("WRBWFRBL")
+
+    # ON RRP：十億美元 → 億美元（× 10），和報表單位一致
+    rrp_l = {d: v * 10 for d, v in W["RRPONTSYD"][0].items()}
+    rrp_t = {d: v * 10 for d, v in W["RRPONTSYD"][1].items()}
+    mn = lambda d: min(d.values()) if d else None
+    r1 = lambda v: None if v is None else round(v, 1)
     tga_l, tga_t, *_ = last_two("WTREGEN")
 
     T = THRESHOLDS
@@ -172,15 +179,16 @@ def build(csv_dir=None):
     add("SOFR 交易量均值 (十億)", avg(W["SOFRVOL"][0]), avg(W["SOFRVOL"][1]))
     add("SOFR99 最高 (%)", mx(W["SOFR99"][0]), mx(W["SOFR99"][1]))
 
-    r = FIXED["reserves"]
-    add("準備金餘額 (兆，固定)", r["last"], r["this"],
-        alert="稀缺區" if r["this"] < T["reserves_scarce"]
-        else "適度區" if r["this"] < T["reserves_ample"] else None)
+    res_l, res_t = round(res_l / 1e6, 2), round(res_t / 1e6, 2)  # 百萬 → 兆
+    add("準備金餘額 (兆)", res_l, res_t,
+        alert="稀缺區" if res_t < T["reserves_scarce"]
+        else "適度區" if res_t < T["reserves_ample"] else None,
+        note="適度 < 3 兆 · 稀缺 < 2.3 兆")
 
-    q = FIXED["rrp"]
-    add("ON RRP 均值 (十億，固定)", q["last"]["avg"], q["this"]["avg"],
-        alert="稀缺區" if q["this"]["avg"] < T["rrp_scarce"] else None,
-        note=f"最低 {q['last']['min']} → {q['this']['min']}")
+    rrp_avg_t = r1(avg(rrp_t))
+    add("ON RRP 均值 (億)", r1(avg(rrp_l)), rrp_avg_t,
+        alert="稀缺區" if rrp_avg_t is not None and rrp_avg_t < T["rrp_scarce"] else None,
+        note=f"最低 {r1(mn(rrp_l))} → {r1(mn(rrp_t))}；稀缺 < 3,750 億")
 
     add("TGA (百萬美元)", tga_l, tga_t,
         alert="稀缺區" if tga_t < T["tga_scarce"] else None)
@@ -195,14 +203,15 @@ def build(csv_dir=None):
         "latest_data": str(max(raw["SOFR"])),
         "rows": rows,
         "daily": {  # 每日明細，給看板展開用（順序對應 rows）
-            name: {"last": {str(k)[5:]: clean(v) for k, v in l.items()},
-                   "this": {str(k)[5:]: clean(v) for k, v in t.items()}}
+            name: {"last": {str(k)[5:]: clean(round(v, 3)) for k, v in l.items()},
+                   "this": {str(k)[5:]: clean(round(v, 3)) for k, v in t.items()}}
             for name, (l, t) in {
                 "SOFR-EFFR 利差最高 (bp)": (sp_last, sp_this),
                 "EFFR 最高 (%)": W["EFFR"],
                 "聯邦基金交易量均值 (十億)": W["EFFRVOL"],
                 "SOFR 交易量均值 (十億)": W["SOFRVOL"],
                 "SOFR99 最高 (%)": W["SOFR99"],
+                "ON RRP 均值 (億)": (rrp_l, rrp_t),
                 "SRF 週合計 (十億)": W["RPONTTLD"],
             }.items()
         },
