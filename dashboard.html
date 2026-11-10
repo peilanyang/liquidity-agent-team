@@ -1,4 +1,4 @@
-<title>美元流動性看板</title>
+<title>全球金融風險看板</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
@@ -7,17 +7,18 @@
   --bg:#f3f4f6; --panel:#ffffff; --fg:#14213d; --muted:#5b6478; --line:#dfe3ea;
   --accent:#e0a100; --accent-ink:#5a4100;
   --red:#c42b1c; --red-bg:#fbe9e7; --amber:#a35f00; --amber-bg:#fdf1dc; --green:#1f7a4d; --green-bg:#e4f4ea;
+  --bar:#b9c1d0;
   --display:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0f1420; --panel:#161d2c; --fg:#e7ebf3; --muted:#9aa4b8; --line:#2a3346;
   --accent:#f2b51d; --accent-ink:#1b1400;
-  --red:#ff7a6b; --red-bg:#3a1a19; --amber:#f0b45a; --amber-bg:#36290f; --green:#6fd3a0; --green-bg:#12301f; color-scheme:dark}}
+  --red:#ff7a6b; --red-bg:#3a1a19; --amber:#f0b45a; --amber-bg:#36290f; --green:#6fd3a0; --green-bg:#12301f; --bar:#3c475d; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0f1420; --panel:#161d2c; --fg:#e7ebf3; --muted:#9aa4b8; --line:#2a3346;
   --accent:#f2b51d; --accent-ink:#1b1400;
-  --red:#ff7a6b; --red-bg:#3a1a19; --amber:#f0b45a; --amber-bg:#36290f; --green:#6fd3a0; --green-bg:#12301f; color-scheme:dark}
+  --red:#ff7a6b; --red-bg:#3a1a19; --amber:#f0b45a; --amber-bg:#36290f; --green:#6fd3a0; --green-bg:#12301f; --bar:#3c475d; color-scheme:dark}
 body{background:var(--bg);color:var(--fg);font-family:var(--display);line-height:1.5;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 40px}
 .wrap{max-width:920px;margin:0 auto;display:grid;gap:20px}
@@ -73,12 +74,23 @@ tr.detail td{padding:0 12px 14px 16px;background:color-mix(in srgb,var(--line) 3
 .step span{font-size:11.5px;color:var(--muted)}
 .arrow{color:var(--muted)}
 .state{padding:40px 0;text-align:center;color:var(--muted)}
+.sec-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;justify-content:space-between}
+.sec-head h2{margin:0;font-size:18px;font-weight:900}
+.sec-head span{font-size:12.5px;color:var(--muted)}
+.spark{display:block;margin-top:6px}
+.spark .b{fill:var(--bar)}
+.spark .b.now{fill:var(--fg)}
+.spark .avg{stroke:var(--accent);stroke-width:1.5}
+.ratio{display:block;font-size:11.5px;color:var(--muted)}
+.ratio.hi{color:var(--amber);font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:8px;vertical-align:middle;margin-right:4px;border-radius:2px}
 </style>
 
 <div class="wrap">
   <header>
     <div class="eyebrow">第一部分 全球動態 · 全球金融風險看板</div>
-    <h1>美元流動性看板</h1>
+    <h1>全球金融風險看板</h1>
     <div class="weeks" id="weeks">載入本週資料中…</div>
   </header>
   <div id="app" hidden>
@@ -89,12 +101,23 @@ tr.detail td{padding:0 12px 14px 16px;background:color-mix(in srgb,var(--line) 3
         <p id="brief"></p>
         <ul class="issues" id="issues" hidden></ul>
       </section>
+      <div class="sec-head"><h2>美元流動性</h2><span>上週 vs 本週 · 依警示門檻標色 · 資料來源 FRED</span></div>
       <div class="table-wrap">
         <table>
           <thead><tr><th>指標</th><th class="num">上週</th><th class="num">本週</th><th>警示與判讀</th></tr></thead>
           <tbody id="rows"></tbody>
         </table>
       </div>
+      <section id="vol" class="wrap" style="max-width:none;gap:12px" hidden>
+        <div class="sec-head"><h2>波動率</h2><span id="vol-sub"></span></div>
+        <div class="legend"><span><i style="background:var(--bar)"></i>過去 13 週</span><span><i style="background:var(--fg)"></i>本週</span><span><i style="background:var(--accent);height:2px"></i>13 週均值</span></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>指標</th><th class="num">上週</th><th class="num">本週</th><th class="num">13 週均值</th><th>13 週走勢與判讀</th></tr></thead>
+            <tbody id="vrows"></tbody>
+          </table>
+        </div>
+      </section>
       <section class="flow">
         <h2>本週產出流程</h2>
         <div class="steps">
@@ -112,7 +135,7 @@ tr.detail td{padding:0 12px 14px 16px;background:color-mix(in srgb,var(--line) 3
 
 <script>
 const RED=["心絞痛","稀缺區"];
-const dec=v=>{const s=String(v);return s.includes(".")?Math.min(s.split(".")[1].length,3):0};
+const dec=v=>{const s=String(v);return s.includes(".")?Math.min(s.split(".")[1].length,5):0};
 const fmt=(v,d)=>v==null?"—":Number(v).toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
@@ -152,7 +175,32 @@ function render(D){
   const S=document.getElementById("summary");
   [["red","紅色警示",counts.red],["amber","需留意",counts.amber],["green","無警示",D.rows.length-counts.red-counts.amber]]
     .forEach(([k,t,n])=>S.insertAdjacentHTML("beforeend",`<span class="chip"><span class="dot" style="background:var(--${k})"></span>${t} <b>${n}</b></span>`));
+  if(D.volatility) renderVol(D.volatility);
   document.getElementById("state").hidden=true; document.getElementById("app").hidden=false;
+}
+function spark(weeks,avg){
+  const vs=Object.values(weeks), n=vs.length, W=168, H=34, pad=2;
+  const top=Math.max(...vs,avg)*1.08||1, bw=(W-pad*2)/n;
+  const y=v=>H-(v/top)*H;
+  const bars=vs.map((v,i)=>`<rect class="b${i===n-1?' now':''}" x="${(pad+i*bw+1).toFixed(1)}" y="${y(v).toFixed(1)}" width="${(bw-2).toFixed(1)}" height="${(H-y(v)).toFixed(1)}" rx="1"></rect>`).join("");
+  return `<svg class="spark" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="13 週走勢">${bars}<line class="avg" x1="0" x2="${W}" y1="${y(avg).toFixed(1)}" y2="${y(avg).toFixed(1)}"></line></svg>`;
+}
+function renderVol(V){
+  const sec=document.getElementById("vol"), tb=document.getElementById("vrows");
+  const above=V.rows.filter(r=>r.alert).length;
+  document.getElementById("vol-sub").textContent=`和自己過去 ${V.avg_weeks} 週平均比較 · ${above} / ${V.rows.length} 項高於均值 · ${V.source}`;
+  V.rows.forEach(r=>{
+    const d=Math.max(dec(r.last),dec(r.this),dec(r.avg13));
+    const cls=r.trend.includes("上升")?"up":r.trend.includes("下降")?"down":"flat";
+    const tr=document.createElement("tr"); tr.className="main"+(r.alert?" lv-amber":"");
+    tr.innerHTML=`<td class="name"><span class="nm">${esc(r.name)}</span><span class="rule">${esc(r.kind)}</span></td>
+      <td class="num">${fmt(r.last,d)}</td>
+      <td class="num">${fmt(r.this,d)}<span class="delta ${cls}">${esc(r.trend)}</span></td>
+      <td class="num">${fmt(r.avg13,d)}<span class="ratio${r.alert?' hi':''}">× ${fmt(r.ratio,2)}</span></td>
+      <td><span class="tag t-${r.alert?'amber':'none'}">${r.alert?esc(r.alert):'小於13週均值'}</span>${spark(r.weeks,r.avg13)}<span class="cmt">${esc(r.comment)}</span></td>`;
+    tb.appendChild(tr);
+  });
+  sec.hidden=false;
 }
 fetch("data.json",{cache:"no-store"}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(render)
   .catch(()=>{document.getElementById("state").textContent="讀不到本週資料（data.json）。請重新整理，或請 Claude 重新發布。";

@@ -12,13 +12,16 @@ watch 各國資金流動性的每周看板
 ```bash
 # 用真實資料
 python3 liquidity.py
+python3 volatility.py
 
 # 離線測試
 python3 liquidity.py tests/sample
+python3 volatility.py tests/sample
 ```
 
 ## 檔案
 - `liquidity.py`：資料員。下載 FRED、按週切分、計算、套用警示門檻
+- `volatility.py`：資料員。下載 Yahoo Finance、按週彙整、和 13 週均值比較
 - `build_data.py`：合併三個角色的產出成 `data.json`
 - `agents/`：主管、分析師、審核員的角色說明
 - `dashboard.html`：看板頁面，讀取同目錄的 `data.json`

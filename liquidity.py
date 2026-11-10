@@ -18,6 +18,7 @@ import sys
 import time
 import urllib.request
 from datetime import date
+from decimal import Decimal, ROUND_HALF_UP
 
 # ========== 1. 設定區：要改數字或門檻，只改這裡 ==========
 
@@ -150,7 +151,8 @@ def build(csv_dir=None):
     rrp_l = {d: v * 10 for d, v in W["RRPONTSYD"][0].items()}
     rrp_t = {d: v * 10 for d, v in W["RRPONTSYD"][1].items()}
     mn = lambda d: min(d.values()) if d else None
-    r1 = lambda v: None if v is None else round(v, 1)
+    # 四捨五入到 1 位小數（1.25 → 1.3，避免電腦浮點數把它捨成 1.2）
+    r1 = lambda v: None if v is None else float(Decimal(str(round(v, 6))).quantize(Decimal("0.1"), ROUND_HALF_UP))
     tga_l, tga_t, *_ = last_two("WTREGEN")
 
     T = THRESHOLDS
