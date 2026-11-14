@@ -72,6 +72,39 @@ SERIES = {
 }
 
 FRED_CSV = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={}&cosd={}"
+
+# 美國財政部金融研究辦公室（OFR）貨幣市場基金監測：每月，來自基金向 SEC 申報的持倉，約落後一個半月
+OFR_SERIES = {
+    "MMF-MMF_TOT-M": "貨幣基金總投資 (美元)",
+    "MMF-MMF_RP_TOT-M": "其中：回購 (美元，含與聯準會的 ON RRP)",
+    "MMF-MMF_RP_wFR-M": "其中：與聯準會的回購，即 ON RRP (美元；無資料的月份代表 0)",
+    "MMF-MMF_T_TOT-M": "其中：美國公債與國庫券 (美元)",
+}
+OFR_URL = "https://data.financialresearch.gov/v1/series/timeseries?mnemonic={}"
+
+
+def fetch_ofr(mnemonic, csv_dir=None):
+    """回傳 {月底日期: 美元}"""
+    if csv_dir:
+        with open(f"{csv_dir}/ofr_{mnemonic}.json", encoding="utf-8") as f:
+            payload = json.load(f)
+    else:
+        payload, err = None, None
+        for attempt in range(3):
+            try:
+                req = urllib.request.Request(OFR_URL.format(mnemonic), headers={"User-Agent": "curl/8.5.0"})
+                with urllib.request.urlopen(req, timeout=60) as resp:
+                    payload = json.loads(resp.read().decode("utf-8"))
+                break
+            except (TimeoutError, OSError, ValueError) as e:
+                err = e
+                time.sleep(3)
+        if payload is None:
+            raise RuntimeError(f"OFR {mnemonic} 下載失敗：{err}")
+    data = {date.fromisoformat(d): v for d, v in payload if v is not None}
+    if not data:
+        raise ValueError(f"OFR {mnemonic} 沒有抓到任何資料")
+    return data
 OFFLINE_TODAY = date(2026, 11, 10)
 
 
@@ -338,6 +371,28 @@ def build(csv_dir=None, today=None):
         note=f"資料日 {mmf_date.isoformat()[5:]}（聯準會每月更新一次）· 只含零售型，約佔貨幣基金總規模四成")
     if mmf_l == mmf_t and value_at(raw["WRMFNS"], last_wk) is not None:
         rows[-1]["trend"] = "資料未更新"
+
+    # 貨幣基金總規模與資金去向（OFR 每月）：上週欄 = 前一個月，本週欄 = 最新一個月
+    ofr = {m: fetch_ofr(m, csv_dir) for m in OFR_SERIES}
+    end_of_week = monday(this_wk) + timedelta(days=6)
+    months = sorted(d for d in ofr["MMF-MMF_TOT-M"] if d <= end_of_week)
+    m_t, m_l = months[-1], months[-2]
+    m_y = max((d for d in months if d <= m_t.replace(year=m_t.year - 1)), default=None)
+    ofr_v = lambda m, d: ofr[m].get(d, 0.0)  # ON RRP 沒有資料的月份代表 0
+    zh = lambda v: round(v / 1e12, 2)
+    tot_l, tot_t = zh(ofr_v("MMF-MMF_TOT-M", m_l)), zh(ofr_v("MMF-MMF_TOT-M", m_t))
+    yoy = f" · 一年前 {zh(ofr_v('MMF-MMF_TOT-M', m_y))} 兆" if m_y else ""
+    month_note = f"{m_l.isoformat()[:7]} → {m_t.isoformat()[:7]}（OFR 每月更新，約落後一個半月）"
+    add("reservoir", "貨幣基金總規模 (兆)", tot_l, tot_t, note=month_note + yoy)
+    for name, val, extra in (
+        ("貨幣基金借進回購市場 (兆)",
+         lambda d: ofr_v("MMF-MMF_RP_TOT-M", d) - ofr_v("MMF-MMF_RP_wFR-M", d),
+         "借給交易商、對沖基金等的回購，不含 ON RRP"),
+        ("貨幣基金持有公債 (兆)", lambda d: ofr_v("MMF-MMF_T_TOT-M", d), "主要是短期國庫券"),
+    ):
+        add("reservoir", name, zh(val(m_l)), zh(val(m_t)), note=f"{extra} · 佔總規模 {val(m_t) / ofr_v('MMF-MMF_TOT-M', m_t):.0%}")
+    add("reservoir", "貨幣基金存在聯準會 (億)", round(ofr_v("MMF-MMF_RP_wFR-M", m_l) / 1e8), round(ofr_v("MMF-MMF_RP_wFR-M", m_t) / 1e8),
+        note="即貨幣基金在 ON RRP 的金額，月底水位")
 
     # ---------- 管線流量 ----------
     add("flow", "SOFR 交易量均值 (十億)", avg(W["SOFRVOL"][0]), avg(W["SOFRVOL"][1]), days=W["SOFRVOL"])
